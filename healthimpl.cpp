@@ -42,7 +42,7 @@ namespace {
 void qti_healthd_board_init(struct healthd_config *)
 {
     int fd;
-    unsigned char retries = 150;
+    unsigned char retries = 75;
     int ret = 0;
     unsigned char buf;
 
