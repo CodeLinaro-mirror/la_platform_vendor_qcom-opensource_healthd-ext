@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -30,7 +30,10 @@ class ChargerCallbackImpl : public ChargerCallback {
 static constexpr const char* gInstanceName = "default";
 static constexpr std::string_view gChargerArg{"--charger"};
 
-constexpr char ucsiPSYName[]{"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1"};
+constexpr char *ucsiPSYName[]{
+	"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
+	"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi2"
+};
 
 #define RETRY_COUNT    100
 
@@ -41,7 +44,8 @@ void qti_healthd_board_init(struct healthd_config *hc)
     int ret = 0;
     unsigned char buf;
 
-    hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName));
+    hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName[0]));
+    hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName[1]));
 retry:
     if (!retries) {
         KLOG_ERROR(LOG_TAG, "Cannot open battery/capacity, fd=%d\n", fd);
