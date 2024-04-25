@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -31,8 +31,8 @@ static constexpr const char* gInstanceName = "default";
 static constexpr std::string_view gChargerArg{"--charger"};
 
 constexpr char *ucsiPSYName[]{
-	"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
-	"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi2"
+	(char *const)"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
+	(char *const)"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi2"
 };
 
 #define RETRY_COUNT    100
