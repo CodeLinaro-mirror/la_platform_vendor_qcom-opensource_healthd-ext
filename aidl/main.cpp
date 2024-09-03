@@ -35,12 +35,12 @@ constexpr char *ucsiPSYName[]{
 	(char *const)"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi2"
 };
 
-#define RETRY_COUNT    100
+#define RETRY_COUNT    600
 
 void qti_healthd_board_init(struct healthd_config *hc)
 {
     int fd;
-    unsigned char retries = RETRY_COUNT;
+    unsigned int retries = RETRY_COUNT;
     int ret = 0;
     unsigned char buf;
 
@@ -67,7 +67,7 @@ retry:
             usleep(100000);
         }
 
-        KLOG_ERROR(LOG_TAG, "Failed to read Battery Capacity ret=%d\n", ret);
+        KLOG_ERROR(LOG_TAG, "Test: Failed to read Battery Capacity ret=%d\n", ret);
         close(fd);
         return;
     }
