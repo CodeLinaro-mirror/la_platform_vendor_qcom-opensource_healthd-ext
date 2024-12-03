@@ -67,7 +67,7 @@ retry:
             usleep(100000);
         }
 
-        KLOG_ERROR(LOG_TAG, "Test: Failed to read Battery Capacity ret=%d\n", ret);
+        KLOG_ERROR(LOG_TAG, "Failed to read Battery Capacity ret=%d\n", ret);
         close(fd);
         return;
     }
