@@ -1,98 +1,91 @@
 /*
  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
+*/
 
-#define LOG_TAG "android.hardware.health-service.qti"
+#include <memory>
+#include <string_view>
 
-#include <android-base/logging.h>
 #include <android/binder_interface_utils.h>
-#include <health/utils.h>
-#include <health-impl/ChargerUtils.h>
 #include <health-impl/Health.h>
-#include <cutils/klog.h>
+#include <health/utils.h>
 
-using aidl::android::hardware::health::HalHealthLoop;
-using aidl::android::hardware::health::Health;
+using ::aidl::android::hardware::health::BatteryHealth;
+using ::aidl::android::hardware::health::BatteryStatus;
+using ::aidl::android::hardware::health::HalHealthLoop;
+using ::aidl::android::hardware::health::Health;
+using ::aidl::android::hardware::health::HealthInfo;
+using ::aidl::android::hardware::health::IHealth;
+using ::android::hardware::health::InitHealthdConfig;
+using ::ndk::ScopedAStatus;
+using ::ndk::SharedRefBase;
+using namespace std::literals;
 
-#if !CHARGER_FORCE_NO_UI
-using aidl::android::hardware::health::charger::ChargerCallback;
-using aidl::android::hardware::health::charger::ChargerModeMain;
 namespace aidl::android::hardware::health {
-class ChargerCallbackImpl : public ChargerCallback {
+
+class HealthImpl : public Health {
   public:
-    ChargerCallbackImpl(const std::shared_ptr<Health>& service) : ChargerCallback(service) {}
-    bool ChargerEnableSuspend() override { return true; }
+    // Use default constructor from IHealth
+    using Health::Health;
+    virtual ~HealthImpl() {}
+
+    ScopedAStatus getChargeCounterUah(int32_t* out) override;
+    ScopedAStatus getCurrentNowMicroamps(int32_t* out) override;
+    ScopedAStatus getCurrentAverageMicroamps(int32_t* out) override;
+    ScopedAStatus getCapacity(int32_t* out) override;
+    ScopedAStatus getChargeStatus(BatteryStatus* out) override;
+    ScopedAStatus getEnergyCounterNwh(int64_t* out) override;
+
+  protected:
+    void UpdateHealthInfo(HealthInfo* health_info) override;
 };
-} //namespace aidl::android::hardware::health
-#endif
 
-static constexpr const char* gInstanceName = "default";
-static constexpr std::string_view gChargerArg{"--charger"};
-
-constexpr char ucsiPSYName[]{"ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1"};
-
-#define RETRY_COUNT    100
-
-void qti_healthd_board_init(struct healthd_config *hc)
-{
-    int fd;
-    unsigned char retries = RETRY_COUNT;
-    int ret = 0;
-    unsigned char buf;
-
-    hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName));
-retry:
-    if (!retries) {
-        KLOG_ERROR(LOG_TAG, "Cannot open battery/capacity, fd=%d\n", fd);
-        return;
-    }
-
-    fd = open("/sys/class/power_supply/battery/capacity", 0440);
-    if (fd >= 0) {
-        KLOG_INFO(LOG_TAG, "opened battery/capacity after %d retries\n", RETRY_COUNT - retries);
-        while (retries) {
-            ret = read(fd, &buf, 1);
-            if(ret >= 0) {
-                KLOG_INFO(LOG_TAG, "Read Batt Capacity after %d retries ret : %d\n", RETRY_COUNT - retries, ret);
-                close(fd);
-                return;
-            }
-
-            retries--;
-            usleep(100000);
-        }
-
-        KLOG_ERROR(LOG_TAG, "Failed to read Battery Capacity ret=%d\n", ret);
-        close(fd);
-        return;
-    }
-
-    retries--;
-    usleep(100000);
-    goto retry;
+ScopedAStatus HealthImpl::getChargeCounterUah(int32_t* out) {
+    *out = 10000;  // 10 Ah
+    return ScopedAStatus::ok();
 }
 
-int main(int argc, char** argv) {
-#ifdef __ANDROID_RECOVERY__
-    android::base::InitLogging(argv, android::base::KernelLogger);
-#endif
+ScopedAStatus HealthImpl::getCurrentNowMicroamps(int32_t* out) {
+    *out = 900000;  // 0.9A
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus HealthImpl::getCurrentAverageMicroamps(int32_t* out) {
+    *out = 900000;  // 0.9A
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus HealthImpl::getCapacity(int32_t* out) {
+    *out = 100;
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus HealthImpl::getChargeStatus(BatteryStatus* out) {
+    *out = BatteryStatus::CHARGING;
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus HealthImpl::getEnergyCounterNwh(int64_t* out) {
+    *out = LONG_MAX;
+    return ScopedAStatus::ok();
+}
+
+void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
+    health_info->chargerAcOnline = true;
+    health_info->batteryStatus = BatteryStatus::CHARGING;
+    health_info->batteryLevel = 100;
+    health_info->batteryChargeTimeToFullNowSeconds = 0;
+}
+}  // namespace aidl::android::hardware::health
+
+int main(int /* argc */, char** /* argv */) {
+    // Automotive does not support offline-charging mode, hence do not handle
+    // --charger option.
+    using aidl::android::hardware::health::HealthImpl;
+
     auto config = std::make_unique<healthd_config>();
-    qti_healthd_board_init(config.get());
-    ::android::hardware::health::InitHealthdConfig(config.get());
-    auto binder = ndk::SharedRefBase::make<Health>(gInstanceName, std::move(config));
-
-    if (argc >= 2 && argv[1] == gChargerArg) {
-#if !CHARGER_FORCE_NO_UI
-        KLOG_INFO(LOG_TAG, "Starting charger mode with UI.");
-        auto charger_callback = std::make_shared<aidl::android::hardware::health::ChargerCallbackImpl>(binder);
-        return ChargerModeMain(binder, charger_callback);
-#endif
-        KLOG_INFO(LOG_TAG, "Starting charger mode without UI.");
-    } else {
-        KLOG_INFO(LOG_TAG, "Starting health HAL.");
-    }
-
+    InitHealthdConfig(config.get());
+    auto binder = SharedRefBase::make<HealthImpl>("default", std::move(config));
     auto hal_health_loop = std::make_shared<HalHealthLoop>(binder, binder);
     return hal_health_loop->StartLoop();
 }
