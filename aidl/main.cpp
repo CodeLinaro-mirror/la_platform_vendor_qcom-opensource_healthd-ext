@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11,6 +11,9 @@
 #include <health-impl/ChargerUtils.h>
 #include <health-impl/Health.h>
 #include <cutils/klog.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using aidl::android::hardware::health::HalHealthLoop;
 using aidl::android::hardware::health::Health;
@@ -43,9 +46,15 @@ void qti_healthd_board_init(struct healthd_config *hc)
     unsigned char retries = RETRY_COUNT;
     int ret = 0;
     unsigned char buf;
+    struct stat st;
 
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName[0]));
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYName[1]));
+
+    /* 3rd party charger check*/
+    if (stat("/sys/class/power_supply/bq27421-0/capacity", &st) >= 0)
+        return;
+
 retry:
     if (!retries) {
         KLOG_ERROR(LOG_TAG, "Cannot open battery/capacity, fd=%d\n", fd);
