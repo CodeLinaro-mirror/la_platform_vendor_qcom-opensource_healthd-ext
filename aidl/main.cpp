@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -30,7 +30,7 @@ class ChargerCallbackImpl : public ChargerCallback {
 static constexpr const char* gInstanceName = "default";
 static constexpr std::string_view gChargerArg{"--charger"};
 
-static constexpr char *ucsiPSYNames[]{
+static constexpr std::array<std::string_view, 2> ucsiPSYNames = {
     "ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
     "ucsi-source-psy-soc:pmic-glink:ucsi-glink1"
 };
