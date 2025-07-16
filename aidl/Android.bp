@@ -19,6 +19,10 @@ cc_defaults {
         "libhealth_aidl_impl",
     ],
 
+    shared_libs : [
+          "libsoc_helper",
+    ],
+
     srcs: [
         "main.cpp",
     ],
