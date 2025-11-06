@@ -28,6 +28,8 @@ typedef enum soc_id {
         MSM_NEO_LA_V2 = 579,
         MSM_SERAPH = 673,
         MSM_SERAPHP = 672,
+        MSM_ALISO_SSG = 739,
+        MSM_ALISO_SSG2 = 740,
 }soc_id_t;
 
 static const enum soc_id target_no_psy[] = {
@@ -36,6 +38,8 @@ static const enum soc_id target_no_psy[] = {
         MSM_NEO_LA_V2,
         MSM_SERAPH,
         MSM_SERAPHP,
+        MSM_ALISO_SSG,
+        MSM_ALISO_SSG2,
 };
 
 using aidl::android::hardware::health::HalHealthLoop;
