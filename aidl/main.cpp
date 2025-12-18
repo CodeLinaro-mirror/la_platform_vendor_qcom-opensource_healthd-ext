@@ -84,20 +84,8 @@ int main(int /* argc */, char** /* argv */) {
     using aidl::android::hardware::health::HealthImpl;
 
     auto config = std::make_unique<healthd_config>();
-    qti_healthd_board_init(config.get());
-    ::android::hardware::health::InitHealthdConfig(config.get());
-    auto binder = ndk::SharedRefBase::make<Health>(gInstanceName, std::move(config));
-
-    if (argc >= 2 && argv[1] == gChargerArg) {
-#if !CHARGER_FORCE_NO_UI
-        KLOG_INFO(LOG_TAG, "Starting charger mode with UI.");
-        auto charger_callback = std::make_shared<aidl::android::hardware::health::ChargerCallbackImpl>(binder);
-        return ChargerModeMain(binder, charger_callback);
-#endif
-        KLOG_INFO(LOG_TAG, "Starting charger mode without UI.");
-    } else {
-        KLOG_INFO(LOG_TAG, "Starting health HAL.");
-    }
+    InitHealthdConfig(config.get());
+    auto binder = SharedRefBase::make<HealthImpl>("default", std::move(config));
 
     auto hal_health_loop = std::make_shared<HalHealthLoop>(binder, binder);
     return hal_health_loop->StartLoop();
