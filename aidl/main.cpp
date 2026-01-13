@@ -30,7 +30,7 @@ typedef enum soc_id {
         MSM_SERAPHP = 672,
         MSM_ALISO_SSG = 739,
         MSM_ALISO_SSG2 = 740,
-};
+}soc_id_t;
 
 static const enum soc_id target_no_psy[] = {
         MSM_NEO_LA,
