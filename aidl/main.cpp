@@ -30,9 +30,10 @@ class ChargerCallbackImpl : public ChargerCallback {
 static constexpr const char* gInstanceName = "default";
 static constexpr std::string_view gChargerArg{"--charger"};
 
-static constexpr std::array<std::string_view, 2> ucsiPSYNames = {
-    "ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
-    "ucsi-source-psy-soc:pmic-glink:ucsi-glink1"
+static constexpr std::array<std::string_view, 3> ucsiPSYNames = {
+        "ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi1",
+        "ucsi-source-psy-soc:qcom,pmic_glink:qcom,ucsi2",
+        "ucsi-source-psy-soc:pmic-glink:ucsi-glink1"
 };
 
 #define RETRY_COUNT    100
@@ -46,6 +47,7 @@ void qti_healthd_board_init(struct healthd_config *hc)
 
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[0]));
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[1]));
+    hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[2]));
 retry:
     if (!retries) {
         KLOG_ERROR(LOG_TAG, "Cannot open battery/capacity, fd=%d\n", fd);
