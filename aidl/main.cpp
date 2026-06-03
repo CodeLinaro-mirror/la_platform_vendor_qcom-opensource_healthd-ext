@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -7,10 +7,33 @@
 
 #include <android-base/logging.h>
 #include <android/binder_interface_utils.h>
+#include <cutils/klog.h>
+#include <cutils/properties.h>
 #include <health/utils.h>
 #include <health-impl/ChargerUtils.h>
 #include <health-impl/Health.h>
-#include <cutils/klog.h>
+
+#define ARRAY_SIZE(x)     (sizeof(x) / sizeof((x)[0]))
+
+extern "C" {
+#include <libsoc_helper.h>
+}
+
+typedef enum soc_id {
+        MSM_NEO_LA = 554,
+        MSM_NEO_LE = 525,
+        MSM_NEO_LA_V2 = 579,
+        MSM_SERAPH = 673,
+        MSM_SERAPHP = 672,
+}soc_id_t;
+
+static const enum soc_id target_no_psy[] = {
+        MSM_NEO_LA,
+        MSM_NEO_LE,
+        MSM_NEO_LA_V2,
+        MSM_SERAPH,
+        MSM_SERAPHP,
+};
 
 using aidl::android::hardware::health::HalHealthLoop;
 using aidl::android::hardware::health::Health;
@@ -44,10 +67,32 @@ void qti_healthd_board_init(struct healthd_config *hc)
     unsigned char retries = RETRY_COUNT;
     int ret = 0;
     unsigned char buf;
+    char prop_str[PROPERTY_VALUE_MAX];
+    int soc_id_prop = 0;
+    bool is_no_batt_psy;
+    soc_info_v0_1_t soc;
 
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[0]));
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[1]));
     hc->ignorePowerSupplyNames.push_back(android::String8(ucsiPSYNames[2]));
+
+    is_no_batt_psy = property_get_bool("persist.vendor.hal_health.no_batt_psy", false);
+
+    get_soc_info(&soc);
+    soc_id_prop = soc.msm_cpu;
+
+    if (!is_no_batt_psy) {
+        for (int idx = 0; idx < ARRAY_SIZE(target_no_psy); idx++) {
+             if(soc_id_prop == target_no_psy[idx]) {
+                KLOG_INFO(LOG_TAG, "no support for batt_psy with socid:%d \n",soc_id_prop);
+                return;
+           }
+        }
+    } else {
+        KLOG_INFO(LOG_TAG, "no support for batt_psy\n");
+        return;
+    }
+
 retry:
     if (!retries) {
         KLOG_ERROR(LOG_TAG, "Cannot open battery/capacity, fd=%d\n", fd);
