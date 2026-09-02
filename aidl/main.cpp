@@ -25,6 +25,8 @@ typedef enum soc_id {
         MSM_NEO_LA_V2 = 579,
         MSM_SERAPH = 673,
         MSM_SERAPHP = 672,
+        MSM_RB3_GEN2_SDM5430 = 575,
+        MSM_RB3_GEN2_SM6490 = 498,
 }soc_id_t;
 
 static const enum soc_id target_no_psy[] = {
@@ -33,6 +35,8 @@ static const enum soc_id target_no_psy[] = {
         MSM_NEO_LA_V2,
         MSM_SERAPH,
         MSM_SERAPHP,
+        MSM_RB3_GEN2_SDM5430,
+        MSM_RB3_GEN2_SM6490,
 };
 
 using aidl::android::hardware::health::HalHealthLoop;
@@ -68,6 +72,7 @@ void qti_healthd_board_init(struct healthd_config *hc)
     int ret = 0;
     unsigned char buf;
     char prop_str[PROPERTY_VALUE_MAX];
+    char soc_name[PROPERTY_VALUE_MAX];
     int soc_id_prop = 0;
     bool is_no_batt_psy;
     soc_info_v0_1_t soc;
@@ -80,8 +85,14 @@ void qti_healthd_board_init(struct healthd_config *hc)
 
     get_soc_info(&soc);
     soc_id_prop = soc.msm_cpu;
+    property_get("ro.vendor.qti.soc_name", soc_name, "");
 
     if (!is_no_batt_psy) {
+        if (strncmp(soc_name, "pikachu", PROPERTY_VALUE_MAX) == 0) {
+            KLOG_INFO(LOG_TAG, "no support for batt_psy for pikachu soc_name\n");
+            return;
+       }
+
         for (int idx = 0; idx < ARRAY_SIZE(target_no_psy); idx++) {
              if(soc_id_prop == target_no_psy[idx]) {
                 KLOG_INFO(LOG_TAG, "no support for batt_psy with socid:%d \n",soc_id_prop);
