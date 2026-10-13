@@ -88,8 +88,9 @@ void qti_healthd_board_init(struct healthd_config *hc)
     property_get("ro.vendor.qti.soc_name", soc_name, "");
 
     if (!is_no_batt_psy) {
-        if (strncmp(soc_name, "pikachu", PROPERTY_VALUE_MAX) == 0) {
-            KLOG_INFO(LOG_TAG, "no support for batt_psy for pikachu soc_name\n");
+        if (strncmp(soc_name, "pikachu", PROPERTY_VALUE_MAX) == 0 ||
+            strncmp(soc_name, "pikachup", PROPERTY_VALUE_MAX) == 0) {
+            KLOG_INFO(LOG_TAG, "no support for batt_psy for pikachu/pikachup soc_name\n");
             return;
        }
 
